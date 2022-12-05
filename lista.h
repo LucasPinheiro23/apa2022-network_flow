@@ -40,6 +40,61 @@ Lista* lst_imprime(Lista* lst){
     }
 }
 
+//Checa se lista inicia com elemento S e termina com T, passando por elemento A1 e A2 (nao necessariamente nessa ordem)
+int lst_check(Lista* lst, int S, int A1, int A2, int T){
+    Lista* p;
+    int simS = 0, simA1 = 0, simA2 = 0, simT = 0;
+    //Checa ultimo elemento primeiro (ordem inversa)
+    if(lst->id == T)
+        simT = 1;
+    else
+        return 0;
+
+    //Checa elemento por elemento ate encontrar A antes de S, senao retorna 0
+    for(p=lst;p!=NULL;p=p->prox){
+        if(lst->id == S && (simA1 || simA2) == 0))
+            return 0;
+        else if(lst->id == A1)
+            simA1 = 1;
+        else if(lst->id == A2)
+            simA2 = 1;
+        else if(lst->id == S && lst->prox == NULL)
+            simS = 1;
+    }
+
+    if(simS && simA1 && simA2 && simT)
+        return 1;
+    else
+        return 0;
+}
+
+//Atualiza dados na lista de acordo com os sinais e o fluxo encaminhado
+Lista* lst_atualiza(Lista* lst, int f, int destino, int s){
+    Lista* p;
+    int s_aux = 0;
+
+    //Checa elemento por elemento, atualizacao normal
+    for(p=lst;p!=NULL;p=p->prox){
+        if(p->id == destino){
+            s_aux = p->s;
+            if(s_aux == 1){
+                if(s == 1)
+                    p->f_atual = p->f_atual + f;
+                else
+                    p->f_atual = p->f_atual - f;
+            }
+            else if(s_aux == 0){
+                if(s == 1)
+                    p->f_atual = p->f_atual - f;
+                else
+                    p->f_atual = p->f_atual + f;
+            }
+        }
+    }
+
+    return p;
+}
+
 //Conta elementos na lista
 int lst_conta(Lista* lst){
     Lista* p;
