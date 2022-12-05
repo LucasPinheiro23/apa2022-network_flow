@@ -203,11 +203,11 @@ int main(int argc, char* argv[]){
 
         //Enquanto nao visita um dos extremos da aresta A
         while((V[A_1] || V[A_2]) == 0){
-            //gettimeofday(&end, NULL);
-            //horas = ((end.tv_sec - start.tv_sec)/3600);
-            //minutos = ((end.tv_sec - start.tv_sec)/60);
-            //segundos = (end.tv_sec - start.tv_sec);
-            //printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
+            gettimeofday(&end, NULL);
+            horas = ((end.tv_sec - start.tv_sec)/3600);
+            minutos = ((end.tv_sec - start.tv_sec)/60);
+            segundos = (end.tv_sec - start.tv_sec);
+            printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
 
             //Se pilha vazia encerra e inicia novo caminho.
             if(pilha_vazia(p)){
