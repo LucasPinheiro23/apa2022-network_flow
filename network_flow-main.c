@@ -7,7 +7,9 @@
 //Define limiar de pilha vazia (CONDICAO DE PARADA)
 #define PV_MAX 3
 //Define tempo maximo de execucao do algoritmo, em minutos (CONDICAO DE PARADA)
-#define MAX_EXEC_TIME 10
+#define MAX_EXEC_TIME 5
+//Define valor maximo de capacidade por aresta a ser considerada nesse problema
+#define MAX_CAP 10000
 //Define metodo forca bruta (1) ou guloso (2)
 #define METHOD 1
 //Define IDs dos extremos da aresta A
@@ -137,22 +139,22 @@ int main(int argc, char* argv[]){
     int cheio_A2 = 0;
 
     //Guarda caminho inverso percorrido durante uma iteracao do algoritmo (de T a S)
-    Lista* L = lst_cria();
+    Lista* L;
 
     //Lista auxiliar
-    Lista* l = lst_cria();
+    Lista* l;
 
     //Para busca em profundidade no grafo
-    Pilha* p = pilha_cria();
+    Pilha* p;
 
     //Define fluxo total que se deseja alcancar
     int R = 12;
     //Variavel que acumula o fluxo acumulado a cada iteracao
     int r = 0;
     //Variavel que armazena o fluxo maximo possivel no caminho atual
-    int f = 10000;
+    int f;
     //Variavel auxiliar de fluxo
-    int f_aux = f;
+    int f_aux;
     //Variavel auxiliar de sentido
     int s_aux = -1;
     //Variavel de controle para verificar se percorreu iniciando de S ate T passando pela aresta A
@@ -179,7 +181,7 @@ int main(int argc, char* argv[]){
         if(PV > PV_MAX)
             break;
         //Inicializa fluxo da iteracao atual
-        f = 0;
+        f = MAX_CAP;
         l = lst_cria();
         //Inicializa pilha com vizinhos de S (o no inicial)
         for(l = adj_list[S]; l != NULL; l = l->prox){
@@ -196,11 +198,13 @@ int main(int argc, char* argv[]){
         //Apaga e recria lista L a cada iteracao/novo caminho a percorrer, iniciando sempre pelo S.
         lst_libera(L);
         L = lst_cria();
+        p = pilha_cria();
         L = lst_insere(L,0,0,0,0);
 
         control = 0;
         nei_pop = 0;
 
+        //***AQUI
         //Enquanto nao visita um dos extremos da aresta A
         while((V[A_1] || V[A_2]) == 0){
             gettimeofday(&end, NULL);
@@ -241,7 +245,7 @@ int main(int argc, char* argv[]){
                     if(l->id == p->prim->id)
                         s_aux = l->s;
                 }
-                lst_insere(L,0,0,s_aux,p->prim->id);
+                L = lst_insere(L,0,0,s_aux,p->prim->id);
                 V[L->id] = 1;
                 //Desempilha o topo e atualiza vizinhos do novo no na pilha p
                 pilha_pop(p);
@@ -255,6 +259,11 @@ int main(int argc, char* argv[]){
             }
             else{
                 pilha_pop(p);
+                //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
+                nei_pop++;
+                if(nei_pop == nei[L->id])
+                    //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
+                    L = L->prox;
             }
         }
 
@@ -284,12 +293,10 @@ int main(int argc, char* argv[]){
             
             //Se flui no sentido direto da aresta A
             if(sent_A == 1){
-                lst_insere(L,0,0,1,A_2);
+                L = lst_insere(L,0,0,1,A_2);
                 V[A_2] = 1;
-                //Desempiha numero de vizinhos que a aresta origem (A_1 ou A_2) tinha
-                for(i = 0; i < nei[A_1]; i++){
-                    pilha_pop(p);
-                }
+                //Desempiha
+                pilha_pop(p);
             }
             
             //Se flui no sentido inverso da aresta A
@@ -340,20 +347,32 @@ int main(int argc, char* argv[]){
                         if(l->id == p->prim->id)
                             s_aux = l->s;
                     }
-                    lst_insere(L,0,0,s_aux,p->prim->id);
+                    L = lst_insere(L,0,0,s_aux,p->prim->id);
                     V[L->id] = 1;
                     //Desempilha o topo e atualiza vizinhos do novo no na pilha p
                     pilha_pop(p);
                     lst_libera(l);
-                    l = lst_cria();
-                    for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                        if(V[l->id] == 0)
-                            pilha_push(p,l->id);
+                    
+                    //Se chegou em T, nem precisa atualizar os vizinhos pois nao havera proxima iteracao
+                    if(L->id != T){
+                        l = lst_cria();
+                        for(l = adj_list[L->id]; l != NULL; l = l->prox){
+                            if(V[l->id] == 0)
+                                pilha_push(p,l->id);
+                        }
+                        lst_libera(l);
                     }
-                    lst_libera(l);
+                    else{
+                        pilha_libera(p);
+                    }
                 }
                 else{
                     pilha_pop(p);
+                    //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
+                    nei_pop++;
+                    if(nei_pop == nei[L->id])
+                        //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
+                        L = L->prox;
                 }
             }
         }
