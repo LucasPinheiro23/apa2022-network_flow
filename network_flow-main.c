@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
     int S = 0;
     int T = N-1;
 
-    Lista* adj_list = (Lista*) malloc(N*sizeof(int));
+    Lista* adj_list[N];
     
     for(i = 0; i < N; i++){
         adj_list[i] = lst_cria();
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]){
     adj_list[T] = lst_insere(adj_list[T],0,2,0,3);
     //FIM DA DEFINICAO DA INSTANCIA DE TESTES V0
 
-    lst_imprime(adj_list[S]);
+    //lst_imprime(adj_list[S]);
 
     //DECLARACAO DAS VARIAVEIS LOCAIS
 
@@ -138,6 +138,9 @@ int main(int argc, char* argv[]){
 
     //Guarda caminho inverso percorrido durante uma iteracao do algoritmo (de T a S)
     Lista* L = lst_cria();
+
+    //Lista auxiliar
+    Lista* l = lst_cria();
 
     //Para busca em profundidade no grafo
     Pilha* p = pilha_cria();
@@ -163,22 +166,23 @@ int main(int argc, char* argv[]){
 
     //LOOP PRINCIPAL (executa algoritmo ate que r>=R ou o tempo se esgote. Caso PV>PV_MAX, tambem interrompe execucao.)
     gettimeofday(&start, NULL);
-    printf("INICIO\n\n");
-    while(r<R && ((end.tv_sec - start.tv_sec) > max_exec_time_secs){
+    //gettimeofday(&end, NULL);
+    printf("INICIO DO ALGORITMO\n\n");
+    while(r<R && ((end.tv_sec - start.tv_sec) <= max_exec_time_secs)){
         //****ADICIONAR CONDICAO DE PARADA POR TEMPO AQUI
         gettimeofday(&end, NULL);
         horas = ((end.tv_sec - start.tv_sec)/3600);
         minutos = ((end.tv_sec - start.tv_sec)/60);
         segundos = (end.tv_sec - start.tv_sec);
-        printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
+        printf("Tempo de execucao decorrido aprox: %d:%d:%ld\n", horas,minutos,segundos);
         //Se PV estourou o limite, significa que a pilha esvaziou muitas vezes durante as buscas. Possivelmente os caminhos ja estao bastante cheios. Encerra o programa.
         if(PV > PV_MAX)
             break;
         //Inicializa fluxo da iteracao atual
         f = 0;
-        Lista* l = lst_cria();
+        l = lst_cria();
         //Inicializa pilha com vizinhos de S (o no inicial)
-        for(l = adj_list[S]; l < NULL; l = l->prox){
+        for(l = adj_list[S]; l != NULL; l = l->prox){
             pilha_push(p,l->id);
         }
         lst_libera(l);
@@ -191,7 +195,7 @@ int main(int argc, char* argv[]){
 
         //Apaga e recria lista L a cada iteracao/novo caminho a percorrer, iniciando sempre pelo S.
         lst_libera(L);
-        Lista* L = lst_cria();
+        L = lst_cria();
         L = lst_insere(L,0,0,0,0);
 
         control = 0;
@@ -199,11 +203,11 @@ int main(int argc, char* argv[]){
 
         //Enquanto nao visita um dos extremos da aresta A
         while((V[A_1] || V[A_2]) == 0){
-            gettimeofday(&end, NULL);
-            horas = ((end.tv_sec - start.tv_sec)/3600);
-            minutos = ((end.tv_sec - start.tv_sec)/60);
-            segundos = (end.tv_sec - start.tv_sec);
-            printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
+            //gettimeofday(&end, NULL);
+            //horas = ((end.tv_sec - start.tv_sec)/3600);
+            //minutos = ((end.tv_sec - start.tv_sec)/60);
+            //segundos = (end.tv_sec - start.tv_sec);
+            //printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
 
             //Se pilha vazia encerra e inicia novo caminho.
             if(pilha_vazia(p)){
@@ -231,7 +235,7 @@ int main(int argc, char* argv[]){
                 }
                 //Se o caminho eh viavel, atualiza fluxo maximo do caminho atual, e atualiza V, L e p
                 f = f_aux;
-                Lista* l = lst_cria();
+                l = lst_cria();
                 //Pega o sentido do fluxo para armazenar no caminho L
                 for(l = adj_list[L->id]; l!=NULL; l=l->prox){
                     if(l->id == p->prim->id)
@@ -242,7 +246,7 @@ int main(int argc, char* argv[]){
                 //Desempilha o topo e atualiza vizinhos do novo no na pilha p
                 pilha_pop(p);
                 lst_libera(l);
-                Lista* l = lst_cria();
+                l = lst_cria();
                 for(l = adj_list[L->id]; l != NULL; l = l->prox){
                     if(V[l->id] == 0)
                         pilha_push(p,l->id);
@@ -299,8 +303,8 @@ int main(int argc, char* argv[]){
             }
 
             //Pega os novos vizinhos do no destino (que ainda nao foram visitados)
-            Lista* l = lst_cria();
-            for(l = adj_list[L->id]; l < NULL; l = l->prox){
+            l = lst_cria();
+            for(l = adj_list[L->id]; l != NULL; l = l->prox){
                 if(V[l->id] == 0)
                     pilha_push(p,l->id);
             }
@@ -330,7 +334,7 @@ int main(int argc, char* argv[]){
                     }
                     //Se o caminho eh viavel, atualiza fluxo maximo do caminho atual, e atualiza V, L e p
                     f = f_aux;
-                    Lista* l = lst_cria();
+                    l = lst_cria();
                     //Pega o sentido do fluxo para armazenar no caminho L
                     for(l = adj_list[L->id]; l!=NULL; l=l->prox){
                         if(l->id == p->prim->id)
@@ -341,7 +345,7 @@ int main(int argc, char* argv[]){
                     //Desempilha o topo e atualiza vizinhos do novo no na pilha p
                     pilha_pop(p);
                     lst_libera(l);
-                    Lista* l = lst_cria();
+                    l = lst_cria();
                     for(l = adj_list[L->id]; l != NULL; l = l->prox){
                         if(V[l->id] == 0)
                             pilha_push(p,l->id);
@@ -363,11 +367,11 @@ int main(int argc, char* argv[]){
                 //Se sim, acumula fluxo em r
                 r = r + f;
                 //E atualiza as capacidades das arestas do grafo na lista de adjacencias, com base no fluxo consumido no caminho L
-                Lista* l = lst_cria();
+                l = lst_cria();
                 for(l=L;l->prox!=NULL;l=l->prox){
                     
                     //Atualiza os fluxos no sentido original do caminho
-                    adj_list[l->prox] = lst_atualiza(adj_list[l->prox->id],f,l->id,1);
+                    adj_list[l->prox->id] = lst_atualiza(adj_list[l->prox->id],f,l->id,1);
                     //Depois atualiza o mesmo fluxo, mas no sentido oposto na lista de adjacencias
                     adj_list[l->id] = lst_atualiza(adj_list[l->id],f,l->prox->id,0);
                     
@@ -378,7 +382,7 @@ int main(int argc, char* argv[]){
         }
 
     }
-
+    printf("FIM DO ALGORITMO\n\n");
 
     if(r >= R){
         printf("Sim, eh possivel passar fluxo minimo %d pela aresta A (%d - %d), partindo de S e chegando em T.", R, A_1, A_2);

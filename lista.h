@@ -52,7 +52,7 @@ int lst_check(Lista* lst, int S, int A1, int A2, int T){
 
     //Checa elemento por elemento ate encontrar A antes de S, senao retorna 0
     for(p=lst;p!=NULL;p=p->prox){
-        if(lst->id == S && (simA1 || simA2) == 0))
+        if(lst->id == S && ((simA1 || simA2) == 0))
             return 0;
         else if(lst->id == A1)
             simA1 = 1;
