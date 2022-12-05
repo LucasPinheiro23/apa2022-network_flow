@@ -207,7 +207,7 @@ int main(int argc, char* argv[]){
             horas = ((end.tv_sec - start.tv_sec)/3600);
             minutos = ((end.tv_sec - start.tv_sec)/60);
             segundos = (end.tv_sec - start.tv_sec);
-            printf("Tempo de execucao decorrido aprox: %d:%d:%d\n", horas,minutos,segundos);
+            printf("Tempo de execucao decorrido aprox: %d:%d:%ld\n", horas,minutos,segundos);
 
             //Se pilha vazia encerra e inicia novo caminho.
             if(pilha_vazia(p)){
