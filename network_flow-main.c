@@ -1,15 +1,22 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include "lista.h"
-#include "pilha.h"
 #include <sys/time.h>
 
+#include "lista.h"
+#include "pilha.h"
+#include "randomize.h"
+
+
+
 //Define limiar de pilha vazia (CONDICAO DE PARADA)
-#define PV_MAX 3
+#define PV_MAX 1000000
 //Define tempo maximo de execucao do algoritmo, em minutos (CONDICAO DE PARADA)
-#define MAX_EXEC_TIME 5
+#define MAX_EXEC_TIME 1
 //Define valor maximo de capacidade por aresta a ser considerada nesse problema
 #define MAX_CAP 10000
+//Redefine constante para uso em geracao aleatoria de numeros (se necessario)
+//#define RAND_MAX 100
+
 //Define metodo forca bruta (1) ou guloso (2)
 #define METHOD 1
 //Define IDs dos extremos da aresta A
@@ -19,15 +26,15 @@
 //DECLARACAO VARIAVEIS GLOBAIS
 //
 //Tempo total de execucao em segundos
-int max_exec_time_secs = MAX_EXEC_TIME * 3600;
+int max_exec_time_secs = MAX_EXEC_TIME * 60;
 int horas = 0;
 int minutos = 0;
 long segundos = 0;
 
-//Funcao para auxiliar na busca em profundidade no grafo.
-//Verifica se o ultimo elemento da lista L consegue chegar no destino atraves de uma aresta que os conecta diretamente
-//Respeitando os sentidos das arestas, o fluxo na aresta eh computado e retornado
-//Se nao for possivel percorrer o caminho (capacidade cheia), retorna -1
+/* Funcao para auxiliar na busca em profundidade no grafo.
+   Verifica se o ultimo elemento da lista L consegue chegar no destino atraves de uma aresta que os conecta diretamente
+   Respeitando os sentidos das arestas, o fluxo na aresta eh computado e retornado
+   Se nao for possivel percorrer o caminho (capacidade cheia), retorna -1 */
 int busca_prof(Lista* origem, int id_destino, int f){
     Lista* b;
     int f_aux = 0;
@@ -71,12 +78,9 @@ int busca_prof(Lista* origem, int id_destino, int f){
             }
         }
     }
-    
-    //Se ha capacidade disponivel, retorna novo fluxo maximo
-    //Se nao, retorna -1
 }
 
-int main(int argc, char* argv[]){
+void main(int argc, char* argv[]){
 
     //Variaveis para utilizacao em loops
     int i, j;
@@ -104,6 +108,7 @@ int main(int argc, char* argv[]){
     adj_list[S] = lst_insere(adj_list[S],0,5,1,2);
     adj_list[1] = lst_insere(adj_list[1],0,12,0,0);
     adj_list[1] = lst_insere(adj_list[1],0,10,1,2);
+    adj_list[1] = lst_insere(adj_list[1],0,12,0,3);
     adj_list[1] = lst_insere(adj_list[1],0,8,1,T);
     adj_list[2] = lst_insere(adj_list[2],0,5,0,0);
     adj_list[2] = lst_insere(adj_list[2],0,10,0,1);
@@ -117,7 +122,7 @@ int main(int argc, char* argv[]){
     adj_list[T] = lst_insere(adj_list[T],0,2,0,3);
     //FIM DA DEFINICAO DA INSTANCIA DE TESTES V0
 
-    lst_imprime(adj_list[T]);
+    //lst_imprime(adj_list[T]);
 
     //DECLARACAO DAS VARIAVEIS LOCAIS
 
@@ -148,7 +153,7 @@ int main(int argc, char* argv[]){
     Pilha* p;
 
     //Define fluxo total que se deseja alcancar
-    int R = 12;
+    int R = 7;
     //Variavel que acumula o fluxo acumulado a cada iteracao
     int r = 0;
     //Variavel que armazena o fluxo maximo possivel no caminho atual
@@ -174,8 +179,8 @@ int main(int argc, char* argv[]){
         //****ADICIONAR CONDICAO DE PARADA POR TEMPO AQUI
         gettimeofday(&end, NULL);
         horas = ((end.tv_sec - start.tv_sec)/3600);
-        minutos = ((end.tv_sec - start.tv_sec)/60);
-        segundos = (end.tv_sec - start.tv_sec);
+        minutos = ((end.tv_sec - start.tv_sec)/60) - horas*60;
+        segundos = (end.tv_sec - start.tv_sec) - minutos*60;
         printf("Tempo de execucao decorrido aprox: %d:%d:%ld\n", horas,minutos,segundos);
         //Se PV estourou o limite, significa que a pilha esvaziou muitas vezes durante as buscas. Possivelmente os caminhos ja estao bastante cheios. Encerra o programa.
         if(PV > PV_MAX)
@@ -185,11 +190,6 @@ int main(int argc, char* argv[]){
         l = lst_cria();
         p = pilha_cria();
 
-        //Inicializa pilha com vizinhos de S (o no inicial)
-        for(l = adj_list[S]; l != NULL; l = l->prox){
-            pilha_push(p,l->id);
-        }
-
         //Inicia sempre pelo S, logo, ativa o primeiro no.
         for(i = 0; i<N;i++){
             V[i] = 0;
@@ -198,7 +198,15 @@ int main(int argc, char* argv[]){
 
         //Recria lista L a cada iteracao/novo caminho a percorrer, iniciando sempre pelo S.
         L = lst_cria();
-        L = lst_insere(L,0,0,0,0);
+        L = lst_insere(L,0,0,-1,0); //O primeiro sentido eh -1 apenas para destacar
+
+        //Inicializa pilha com vizinhos de S (o no inicial)
+        for(l = adj_list[S]; l != NULL; l = l->prox){
+            pilha_push(p,l->id);
+        }
+        //Embaralha os vizinhos de S (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+        if(nei[L->id] > 1)
+            pilha_shuffle(p,nei[L->id]);
 
         control = 0;
         nei_pop = 0;
@@ -207,8 +215,9 @@ int main(int argc, char* argv[]){
         while((V[A_1] || V[A_2]) == 0){
             gettimeofday(&end, NULL);
             horas = ((end.tv_sec - start.tv_sec)/3600);
-            minutos = ((end.tv_sec - start.tv_sec)/60);
-            segundos = (end.tv_sec - start.tv_sec);
+            minutos = ((end.tv_sec - start.tv_sec)/60) - horas*60;
+            segundos = (end.tv_sec - start.tv_sec) - minutos*60;
+            
             printf("Tempo de execucao decorrido aprox: %d:%d:%ld\n", horas,minutos,segundos);
 
             //Se pilha vazia encerra e inicia novo caminho.
@@ -230,9 +239,11 @@ int main(int argc, char* argv[]){
                     pilha_pop(p);
                     //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
                     nei_pop++;
-                    if(nei_pop == nei[L->id])
-                        //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
+                    //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
+                    if(nei_pop == nei[L->id]){
                         L = L->prox;
+                        nei_pop = 0;
+                    }
                     continue;
                 }
                 //Se o caminho eh viavel, atualiza fluxo maximo do caminho atual, e atualiza V, L e p
@@ -240,9 +251,10 @@ int main(int argc, char* argv[]){
                 l = lst_cria();
                 //Pega o sentido do fluxo para armazenar no caminho L
                 for(l = adj_list[L->id]; l!=NULL; l=l->prox){
-                    if(l->id == p->prim->id)
+                    if(l->id == p->prim->id){
                         s_aux = l->s;
                         break;
+                    }
                 }
                 L = lst_insere(L,0,0,s_aux,p->prim->id);
                 V[L->id] = 1;
@@ -250,17 +262,21 @@ int main(int argc, char* argv[]){
                 pilha_pop(p);
                 l = lst_cria();
                 for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                    if(V[l->id] == 0)
-                        pilha_push(p,l->id);
+                    pilha_push(p,l->id);
                 }
+                //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+                if(nei[L->id] > 1)
+                    pilha_shuffle(p,nei[L->id]);
             }
             else{
                 pilha_pop(p);
                 // //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
                 nei_pop++;
                 //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
-                if(nei_pop == nei[L->id])
+                if(nei_pop == nei[L->id]){
                     L = L->prox;
+                    nei_pop = 0;
+                }
             }
         }
 
@@ -298,7 +314,7 @@ int main(int argc, char* argv[]){
             
             //Se flui no sentido inverso da aresta A
             if(sent_A == 0){
-                lst_insere(L,0,0,0,A_1);
+                L = lst_insere(L,0,0,0,A_1);
                 V[A_1] = 1;
                 //Desempiha
                 pilha_pop(p);
@@ -307,9 +323,11 @@ int main(int argc, char* argv[]){
             //Pega os novos vizinhos do no destino (que ainda nao foram visitados)
             l = lst_cria();
             for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                if(V[l->id] == 0)
-                    pilha_push(p,l->id);
+                pilha_push(p,l->id);
             }
+            //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+            if(nei[L->id] > 1)
+                pilha_shuffle(p,nei[L->id]);
 
             //Enquanto nao visita T...
             while(V[T] == 0){
@@ -328,9 +346,16 @@ int main(int argc, char* argv[]){
                         pilha_pop(p);
                         //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
                         nei_pop++;
-                        if(nei_pop == nei[L->id])
+                        if(nei_pop == nei[L->id]){
+                            //Limita o backtracking ate uma das extremidades da aresta A
+                            if(L->id == A_1 || L->id == A_2){
+                                control = 1;
+                                break;
+                            }
                             //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
                             L = L->prox;
+                            nei_pop = 0;
+                        }
                         continue;
                     }
                     //Se o caminho eh viavel, atualiza fluxo maximo do caminho atual, e atualiza V, L e p
@@ -338,9 +363,10 @@ int main(int argc, char* argv[]){
                     l = lst_cria();
                     //Pega o sentido do fluxo para armazenar no caminho L
                     for(l = adj_list[L->id]; l!=NULL; l=l->prox){
-                        if(l->id == p->prim->id)
+                        if(l->id == p->prim->id){
                             s_aux = l->s;
                             break;
+                        }
                     }
                     L = lst_insere(L,0,0,s_aux,p->prim->id);
                     V[L->id] = 1;
@@ -351,9 +377,11 @@ int main(int argc, char* argv[]){
                     if(L->id != T){
                         l = lst_cria();
                         for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                            if(V[l->id] == 0)
-                                pilha_push(p,l->id);
+                            pilha_push(p,l->id);
                         }
+                        //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+                        if(nei[L->id] > 1)
+                            pilha_shuffle(p,nei[L->id]);
                     }
                 }
                 else{
@@ -361,14 +389,17 @@ int main(int argc, char* argv[]){
                     //Verifica se ainda existem vizinhos a visitar antes de continuar o loop
                     nei_pop++;
                     //Se visitou todos os vizinhos do no atual, retorna para o elemento anterior no caminho (backtracking)
-                    if(nei_pop == nei[L->id])
+                    if(nei_pop == nei[L->id]){
                         L = L->prox;
+                        nei_pop = 0;
+                    }
+                        
                 }
             }
         }
 
         //Apos percorrer o grafo, se nao incorreu em nenhuma condicao de parada:
-        //Checa se variavel de controle eh 0, o que significa que nao achou T antes de A_1 ou A_2.
+        //Checa se variavel de controle eh 0, o que significa que nao achou T antes de A_1 ou A_2, e que nao incorreu no limite de backtracking apos aresta A.
         if(control == 0){
             //Checa se o caminho eh valido
             if(lst_check(L,S,A_1,A_2,T)){
@@ -390,24 +421,27 @@ int main(int argc, char* argv[]){
         }
 
     }
-    printf("FIM DO ALGORITMO\n\n");
+    printf("FIM DO ALGORITMO\n---------\n\n");
+
+    printf("RESPOSTA DO PROBLEMA:\n\n");
 
     if(r >= R){
         printf("Sim, eh possivel passar fluxo minimo %d pela aresta A (%d - %d), partindo de S e chegando em T.\n\n\n", R, A_1, A_2);
-        return 1;
     }
-    else if(minutos > MAX_EXEC_TIME){
-        printf("Tempo limite de execucao excedido (%d minutos).\n", minutos);
-        printf("Nao foi possivel determinar a resposta do problema (assume-se negativa).\n\n\n");
-        return 0;
+    else if(minutos >= MAX_EXEC_TIME){
+        printf("Tempo limite de execucao excedido (%d minutos).\n", MAX_EXEC_TIME);
+        printf("Nao foi possivel determinar a resposta do problema (assume-se negativa).\n");
+        printf("Fluxo maximo alcancado: %d.\n",r);
+        printf("Quantidade de esvaziamentos de pilha nas buscas: %d.\n\n\n",PV);
     }
     else if(PV > PV_MAX){
-        printf("A pilha esvaziou no minimo %d vezes, o que implica que o algoritmo teve dificuldades em encontrar caminhos viaveis antes de ser capaz de transmitir fluxo minimo R de S a T passando por A.\nLogo, provavelmente a resposta para o problema eh negativa.\n\n\n", PV_MAX);
-        return 0;
+        printf("A pilha esvaziou no minimo %d vezes, o que implica que o algoritmo teve dificuldades em encontrar caminhos viaveis antes de ser capaz de transmitir fluxo minimo R de S a T passando por A.\nLogo, provavelmente a resposta para o problema eh negativa.\n", PV_MAX);
+        printf("Fluxo maximo alcancado: %d.\n\n\n",r);
     }
 
+    printf("Tempo de execucao total: %d:%d:%ld\n\n\n", horas, minutos, segundos);
+
     lst_libera(L);
-    lst_libera(l);
     pilha_libera(p);
     
     for(i = 0; i < N; i++){

@@ -1,6 +1,7 @@
 #ifndef PILHA_H
 #define PILHA_H
 #include "lista.h"
+#include "randomize.h"
 
 typedef struct pilha Pilha;
 struct pilha{
@@ -45,6 +46,7 @@ int pilha_pop (Pilha* p){
     return v;
 }
 
+//Libera pilha da memoria
 void pilha_libera (Pilha* p){
     Lista *t, *q = p->prim;
     while (q!=NULL){
@@ -53,6 +55,33 @@ void pilha_libera (Pilha* p){
         q = t;
     }
     free(p);
+}
+
+//Reordena n primeiros elementos da pilha
+void pilha_shuffle(Pilha* p, int n){
+    int i;
+    int* v = (int*) malloc(n*sizeof(int));
+
+    for(i = 0; i < n; i++){
+        if(!pilha_vazia(p)){
+            //Coleta os primeiros n elementos da pilha em um vetor auxiliar
+            v[i] = pilha_pop(p);
+        }
+        else{
+            //Pilha tinha menos elementos que n elementos! Encerra programa.
+            printf("ERRO: Pilha esvaziada na funcao shuffle.");
+            exit(-1);
+        }
+    }
+
+    //Embaralha o vetor
+    shuffle(v,n);
+
+    //Reinsere elementos reordenados na pilha
+    for(i = 0; i < n; i++){
+        pilha_push(p,v[i]);
+    }
+
 }
 
 #endif
