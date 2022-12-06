@@ -34,7 +34,10 @@ void pilha_push (Pilha* p, int id){
 int pilha_pop (Pilha* p){
     Lista* t;
     int v;
-    if (pilha_vazia(p)) exit(1); /* aborta programa */
+    if (pilha_vazia(p)){
+        printf("ERRO: PILHA VAZIA");
+        return -1; /* aborta programa */
+    }
     t = p->prim;
     v = t->id;
     p->prim = t->prox;

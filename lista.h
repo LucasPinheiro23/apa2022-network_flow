@@ -33,6 +33,7 @@ Lista* lst_insere(Lista* lst, int f_atual, int f_max, int s, int id){
 Lista* lst_imprime(Lista* lst){
     Lista* p;
     for(p=lst;p!=NULL;p=p->prox){
+        printf("----\n");
         printf("Fluxo Atual = %d\n",p->f_atual);
         printf("Fluxo Maximo = %d\n",p->f_max);
         printf("Sentido = %d\n",p->s);
@@ -52,13 +53,13 @@ int lst_check(Lista* lst, int S, int A1, int A2, int T){
 
     //Checa elemento por elemento ate encontrar A antes de S, senao retorna 0
     for(p=lst;p!=NULL;p=p->prox){
-        if(lst->id == S && ((simA1 || simA2) == 0))
+        if(p->id == S && ((simA1 || simA2) == 0))
             return 0;
-        else if(lst->id == A1)
+        else if(p->id == A1)
             simA1 = 1;
-        else if(lst->id == A2)
+        else if(p->id == A2)
             simA2 = 1;
-        else if(lst->id == S && lst->prox == NULL)
+        else if(p->id == S && p->prox == NULL)
             simS = 1;
     }
 
@@ -89,10 +90,11 @@ Lista* lst_atualiza(Lista* lst, int f, int destino, int s){
                 else
                     p->f_atual = p->f_atual + f;
             }
+            break;
         }
     }
 
-    return p;
+    return lst;
 }
 
 //Conta elementos na lista
