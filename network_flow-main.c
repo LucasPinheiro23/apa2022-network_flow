@@ -7,24 +7,23 @@
 #include "randomize.h"
 
 
-
 //Define limiar de pilha vazia (CONDICAO DE PARADA)
 #define PV_MAX 1000000
 //Define tempo maximo de execucao do algoritmo, em minutos (CONDICAO DE PARADA)
-#define MAX_EXEC_TIME 1
+#define MAX_EXEC_TIME 1000
 //Define valor maximo de capacidade por aresta a ser considerada nesse problema
 #define MAX_CAP 10000
-//Redefine constante para uso em geracao aleatoria de numeros (se necessario)
-//#define RAND_MAX 100
 
 //Define metodo forca bruta (1) ou guloso (2)
 #define METHOD 1
 //Define IDs dos extremos da aresta A
 #define A_1 1
 #define A_2 2
+//Valor de R a ser alcancado
+#define TARGET 3
 
 //DECLARACAO VARIAVEIS GLOBAIS
-//
+
 //Tempo total de execucao em segundos
 int max_exec_time_secs = MAX_EXEC_TIME * 60;
 int horas = 0;
@@ -153,7 +152,7 @@ void main(int argc, char* argv[]){
     Pilha* p;
 
     //Define fluxo total que se deseja alcancar
-    int R = 7;
+    int R = TARGET;
     //Variavel que acumula o fluxo acumulado a cada iteracao
     int r = 0;
     //Variavel que armazena o fluxo maximo possivel no caminho atual
@@ -162,6 +161,13 @@ void main(int argc, char* argv[]){
     int f_aux;
     //Variavel auxiliar de sentido
     int s_aux = -1;
+    //Variaveis auxiliares do algoritmo guloso
+    int c_max = MAX_CAP; //Capacidade maxima a cada iteracao
+    int id_sel; //Id selecionado a cada iteracao
+    int* nei_gula; //Vetor dinamico para armazenar ids dos nos ja inseridos na pilha do guloso
+    int control_gula = 0; //Variavel de controle do guloso
+    int control_gula2 = 0; //Variavel de controle do guloso
+
     //Variavel de controle para verificar se percorreu iniciando de S ate T passando pela aresta A
     int control;
 
@@ -200,13 +206,67 @@ void main(int argc, char* argv[]){
         L = lst_cria();
         L = lst_insere(L,0,0,-1,0); //O primeiro sentido eh -1 apenas para destacar
 
-        //Inicializa pilha com vizinhos de S (o no inicial)
-        for(l = adj_list[S]; l != NULL; l = l->prox){
-            pilha_push(p,l->id);
+        //FORCA BRUTA
+        if(METHOD == 1){
+            //Inicializa pilha com vizinhos de S (o no inicial)
+            for(l = adj_list[S]; l != NULL; l = l->prox){
+                pilha_push(p,l->id);
+            }
+            //Embaralha os vizinhos de S (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+            if(nei[L->id] > 1)
+                pilha_shuffle(p,nei[L->id]);
         }
-        //Embaralha os vizinhos de S (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
-        if(nei[L->id] > 1)
-            pilha_shuffle(p,nei[L->id]);
+        //GULOSO
+        else if(METHOD == 2){
+            nei_gula = (int*) malloc(nei[S]*sizeof(int));
+            nei_gula[0] = -100; //controle
+            //Insere os vizinhos de S na pilha em ordem crescente de capacidade de fluxo disponivel
+            for(i = 0; i < nei[S]; i++){
+                c_max = MAX_CAP;
+                control_gula2 = 0;
+                for(l = adj_list[S]; l != NULL; l = l->prox){
+
+                    control_gula = 0;
+                    
+                    //Nao executa na primeira iteracao pois nei_gula nao esta preenchido
+                    if(nei_gula[0] != -100){
+                        for(j = 0; j < nei[S]; j++){
+                            if(l->id == nei_gula[j]){
+                                control_gula = 1;
+                                break;
+                            }
+                        }
+
+                        if(control_gula == 1)
+                            continue;
+                    }
+
+                    if((l->f_max-l->f_atual) < c_max && l->s == 1){
+                        c_max = (l->f_max-l->f_atual);
+                        id_sel = l->id;
+                        control_gula2 = 1;
+                    }
+                    else if(l->f_atual > 0 && l->f_atual < c_max && l->s == 0){
+                        c_max = l->f_atual;
+                        id_sel = l->id;
+                        control_gula2 = 1;
+                    }
+                }
+                if(pilha_vazia(p) && control_gula2){
+                    pilha_push(p,id_sel);
+                    //Marca ID no vetor do guloso para que nao seja mais selecionado
+                    nei_gula[i] = id_sel;
+                }
+                else if(control_gula2){
+                    pilha_push(p,id_sel);
+                    //Marca ID no vetor do guloso para que nao seja mais selecionado
+                    nei_gula[i] = id_sel;
+                }
+            }
+
+            //Libera nei_gula
+            free(nei_gula);
+        }
 
         control = 0;
         nei_pop = 0;
@@ -260,13 +320,67 @@ void main(int argc, char* argv[]){
                 V[L->id] = 1;
                 //Desempilha o topo e atualiza vizinhos do novo no na pilha p
                 pilha_pop(p);
-                l = lst_cria();
-                for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                    pilha_push(p,l->id);
+                //FORCA BRUTA
+                if(METHOD == 1){
+                    l = lst_cria();
+                    for(l = adj_list[L->id]; l != NULL; l = l->prox){
+                        pilha_push(p,l->id);
+                    }
+                    //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+                    if(nei[L->id] > 1)
+                        pilha_shuffle(p,nei[L->id]);
                 }
-                //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
-                if(nei[L->id] > 1)
-                    pilha_shuffle(p,nei[L->id]);
+                //GULOSO
+                else if(METHOD == 2){
+                    nei_gula = (int*) malloc(nei[L->id]*sizeof(int));
+                    nei_gula[0] = -100; //controle
+                    //Insere os vizinhos do novo no na pilha em ordem crescente de capacidade de fluxo disponivel
+                    for(i = 0; i < nei[L->id]; i++){
+                        c_max = MAX_CAP;
+                        control_gula2 = 0;
+                        for(l = adj_list[L->id]; l != NULL; l = l->prox){
+
+                            control_gula = 0;
+                            
+                            //Nao executa na primeira iteracao pois nei_gula nao esta preenchido
+                            if(nei_gula[0] != -100){
+                                for(j = 0; j < nei[L->id]; j++){
+                                    if(l->id == nei_gula[j] || V[l->id] == 1){
+                                        control_gula = 1;
+                                        break;
+                                    }
+                                }
+
+                                if(control_gula == 1)
+                                    continue;
+                            }
+
+                            if((l->f_max-l->f_atual) < c_max && l->s == 1 && V[l->id] != 1){
+                                c_max = (l->f_max-l->f_atual);
+                                id_sel = l->id;
+                                control_gula2 = 1;
+                            }
+                            else if(l->f_atual > 0 && l->f_atual < c_max && l->s == 0 && V[l->id] != 1){
+                                c_max = l->f_atual;
+                                id_sel = l->id;
+                                control_gula2 = 1;
+                            }
+                        }
+                        if(pilha_vazia(p) && control_gula2){
+                            pilha_push(p,id_sel);
+                            //Marca ID no vetor do guloso para que nao seja mais selecionado
+                            nei_gula[i] = id_sel;
+                        }
+                        else if(control_gula2){
+                            pilha_push(p,id_sel);
+                            //Marca ID no vetor do guloso para que nao seja mais selecionado
+                            nei_gula[i] = id_sel;
+                        }
+                    }
+
+                    //Libera nei_gula
+                    free(nei_gula);
+                }
             }
             else{
                 pilha_pop(p);
@@ -320,15 +434,69 @@ void main(int argc, char* argv[]){
                 pilha_pop(p);
             }
 
-            //Pega os novos vizinhos do no destino (que ainda nao foram visitados)
-            l = lst_cria();
-            for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                pilha_push(p,l->id);
+            //FORCA BRUTA
+            if(METHOD == 1){
+                //Pega os novos vizinhos do no destino (que ainda nao foram visitados)
+                l = lst_cria();
+                for(l = adj_list[L->id]; l != NULL; l = l->prox){
+                    pilha_push(p,l->id);
+                }
+                //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+                if(nei[L->id] > 1)
+                    pilha_shuffle(p,nei[L->id]);
             }
-            //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
-            if(nei[L->id] > 1)
-                pilha_shuffle(p,nei[L->id]);
+            //GULOSO
+            else if (METHOD == 2){
+                nei_gula = (int*) malloc(nei[L->id]*sizeof(int));
+                nei_gula[0] = -100;
+                    //Insere os vizinhos do novo no na pilha em ordem crescente de capacidade de fluxo disponivel
+                    for(i = 0; i < nei[L->id]; i++){
+                        c_max = MAX_CAP;
+                        control_gula2 = 0;
+                        for(l = adj_list[L->id]; l != NULL; l = l->prox){
 
+                            control_gula = 0;
+                            
+                            //Nao executa na primeira iteracao pois nei_gula nao esta preenchido
+                            if(nei_gula[0] != -100){
+                                for(j = 0; j < nei[L->id]; j++){
+                                    if(l->id == nei_gula[j] || V[l->id] == 1){
+                                        control_gula = 1;
+                                        break;
+                                    }
+                                }
+
+                                if(control_gula == 1)
+                                    continue;
+                            }
+
+                            if((l->f_max-l->f_atual) < c_max && l->s == 1 && V[l->id] != 1){
+                                c_max = (l->f_max-l->f_atual);
+                                id_sel = l->id;
+                                control_gula2 = 1;
+                            }
+                            else if(l->f_atual > 0 && l->f_atual < c_max && l->s == 0 && V[l->id] != 1){
+                                c_max = l->f_atual;
+                                id_sel = l->id;
+                                control_gula2 = 1;
+                            }
+                        }
+                        if(pilha_vazia(p) && control_gula2){
+                            pilha_push(p,id_sel);
+                            //Marca ID no vetor do guloso para que nao seja mais selecionado
+                            nei_gula[i] = id_sel;
+                        }
+                        else if(control_gula2){
+                            pilha_push(p,id_sel);
+                            //Marca ID no vetor do guloso para que nao seja mais selecionado
+                            nei_gula[i] = id_sel;
+                        }
+                    }
+
+                    //Libera nei_gula
+                    free(nei_gula);
+                }
+            
             //Enquanto nao visita T...
             while(V[T] == 0){
 
@@ -375,13 +543,67 @@ void main(int argc, char* argv[]){
                     
                     //Se chegou em T, nem precisa atualizar os vizinhos pois nao havera proxima iteracao
                     if(L->id != T){
-                        l = lst_cria();
-                        for(l = adj_list[L->id]; l != NULL; l = l->prox){
-                            pilha_push(p,l->id);
+                        //FORCA BRUTA
+                        if(METHOD == 1){
+                            l = lst_cria();
+                            for(l = adj_list[L->id]; l != NULL; l = l->prox){
+                                pilha_push(p,l->id);
+                            }
+                            //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
+                            if(nei[L->id] > 1)
+                                pilha_shuffle(p,nei[L->id]);
                         }
-                        //Embaralha os vizinhos inseridos na pilha (GARANTE A ALEATORIEDADE NO METODO BRUTE FORCE)
-                        if(nei[L->id] > 1)
-                            pilha_shuffle(p,nei[L->id]);
+                        //GULOSO
+                        else if (METHOD == 2){
+                            nei_gula = (int*) malloc(nei[L->id]*sizeof(int));
+                            nei_gula[0] = -100; //controle
+                            //Insere os vizinhos do novo no na pilha em ordem crescente de capacidade de fluxo disponivel
+                            for(i = 0; i < nei[L->id]; i++){
+                                c_max = MAX_CAP;
+                                control_gula2 = 0;
+                                for(l = adj_list[L->id]; l != NULL; l = l->prox){
+
+                                    control_gula = 0;
+                                        
+                                    //Nao executa na primeira iteracao pois nei_gula nao esta preenchido
+                                    if(nei_gula[0] != -100){
+                                        for(j = 0; j < nei[L->id]; j++){
+                                            if(l->id == nei_gula[j] || V[l->id] == 1){
+                                                control_gula = 1;
+                                                break;
+                                            }
+                                        }
+
+                                        if(control_gula == 1)
+                                            continue;
+                                    }
+
+                                    if((l->f_max-l->f_atual) < c_max && l->s == 1 && V[l->id] != 1){
+                                        c_max = (l->f_max-l->f_atual);
+                                        id_sel = l->id;
+                                        control_gula2 = 1;
+                                    }
+                                    else if(l->f_atual > 0 && l->f_atual < c_max && l->s == 0 && V[l->id] != 1){
+                                        c_max = l->f_atual;
+                                        id_sel = l->id;
+                                        control_gula2 = 1;
+                                    }
+                                }
+                                if(pilha_vazia(p) && control_gula2){
+                                    pilha_push(p,id_sel);
+                                    //Marca ID no vetor do guloso para que nao seja mais selecionado
+                                    nei_gula[i] = id_sel;
+                                }
+                                else if(control_gula2){
+                                    pilha_push(p,id_sel);
+                                    //Marca ID no vetor do guloso para que nao seja mais selecionado
+                                    nei_gula[i] = id_sel;
+                                }
+                            }
+
+                            //Libera nei_gula
+                            free(nei_gula);
+                        }
                     }
                 }
                 else{
