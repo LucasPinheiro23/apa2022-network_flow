@@ -206,21 +206,22 @@ int inst_gen(int N, char* filename){
 //Permite gerar tantas instancias quanto especificado por argc
 void main(int argc, char* argv[]){
 
-    int N = 10; //N inicial
+    int Ni = 100; //Multiplicador
+    int N = 1000; //N inicial
     int i, count = 0;
     char name[22];
 
     // time_t t;
     // struct tm *tm = localtime(&t);
 
-    while(count <= argc){
+    while(count <= 2){
 
         sprintf(name,"%d",N);
 
         if(inst_gen(N,name)){
             printf("Gerou instancia %d...",N);
-            count = count * count;
-            N = N * N;
+            count = count++;
+            N = N * Ni;
         }
         else{
             printf("Estouro de tempo\n");

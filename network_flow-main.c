@@ -11,7 +11,7 @@
 //Define limiar de pilha vazia (CONDICAO DE PARADA)
 #define PV_MAX 1000000
 //Define tempo maximo de execucao do algoritmo, em minutos (CONDICAO DE PARADA)
-#define MAX_EXEC_TIME 1
+//#define MAX_EXEC_TIME 1
 //Define valor maximo de capacidade por aresta a ser considerada nesse problema
 #define MAX_CAP 10000
 
@@ -22,14 +22,6 @@
 //#define A_2 2
 //Valor de R a ser alcancado
 #define TARGET 3
-
-//DECLARACAO VARIAVEIS GLOBAIS
-
-//Tempo total de execucao em segundos
-int max_exec_time_secs = MAX_EXEC_TIME * 60;
-int horas = 0;
-int minutos = 0;
-long segundos = 0;
 
 /* Funcao para auxiliar na busca em profundidade no grafo.
    Verifica se o ultimo elemento da lista L consegue chegar no destino atraves de uma aresta que os conecta diretamente
@@ -103,6 +95,17 @@ void main(int argc, char* argv[]){
     int R;
     printf("\nEntre com o fluxo alvo R: ");
     scanf("%d",&R);
+
+    //Define limite de tempo
+    int MAX_EXEC_TIME;
+    printf("\nEntre com o limite de tempo (em minutos): ");
+    scanf("%d",&MAX_EXEC_TIME);
+
+    //Tempo total de execucao em segundos
+    int max_exec_time_secs = MAX_EXEC_TIME * 60;
+    int horas = 0;
+    int minutos = 0;
+    long segundos = 0;
 
     //Faz a leitura da lista de adjacencias do grafo
 
@@ -736,12 +739,12 @@ void main(int argc, char* argv[]){
 
     printf("Tempo de execucao total: %d:%d:%ld\n\n\n", horas, minutos, segundos);
 
+    printf("\a");
+    
     lst_libera(L);
     pilha_libera(p);
     
     for(i = 0; i < N; i++){
         lst_libera(adj_list[i]);
     }
-
-    printf("\a");
 }
