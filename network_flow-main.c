@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include <sys/time.h>
 
 #include "lista.h"
@@ -10,15 +11,15 @@
 //Define limiar de pilha vazia (CONDICAO DE PARADA)
 #define PV_MAX 1000000
 //Define tempo maximo de execucao do algoritmo, em minutos (CONDICAO DE PARADA)
-#define MAX_EXEC_TIME 1000
+#define MAX_EXEC_TIME 1
 //Define valor maximo de capacidade por aresta a ser considerada nesse problema
 #define MAX_CAP 10000
 
 //Define metodo forca bruta (1) ou guloso (2)
-#define METHOD 1
+//#define METHOD 1
 //Define IDs dos extremos da aresta A
-#define A_1 1
-#define A_2 2
+//#define A_1 1
+//#define A_2 2
 //Valor de R a ser alcancado
 #define TARGET 3
 
@@ -88,12 +89,55 @@ void main(int argc, char* argv[]){
     long seq_seconds, rec_seconds;
     long seq_micros, rec_micros;
 
+    //Seleciona o metodo de execucao do algoritmo
+    int METHOD;
+    printf("Entre com o metodo (1-FORCA BRUTA, 2-GULOSO): ");
+    scanf("%d",&METHOD);
+    
+    if(METHOD < 1 || METHOD > 2){
+        printf("\nERRO: metodo incorreto selecionado. Encerrando programa.");
+        exit(-1);
+    }
+
+    //Define fluxo total que se deseja alcancar
+    int R;
+    printf("\nEntre com o fluxo alvo R: ");
+    scanf("%d",&R);
+
     //Faz a leitura da lista de adjacencias do grafo
-    //INSERIR AQUI LEITURA DE ARQUIVO TXT
+
+    char nome[15];
+    printf("\nDigite o nome do arquivo da instancia, sem extensao (max 15 caracteres): ");
+    scanf("%s",nome);
+
+    FILE* arq;
+    char buffer[10];
+    char* aux;
+
+    arq = fopen(strcat(nome,".txt"),"r");
+
+    //Testa se arquivo realmente existe na pasta local
+    if(arq == NULL)
+    {
+        printf("\nErro na abertura do arquivo! Verifique se o mesmo se encontra no diretorio local e possui extensao .txt.");
+        exit(-1);
+    }
+
+    //Obtem numero de nos do grafo a partir do arquivo (primeira linha)
+    int N = atoi(fgets(buffer, 10, arq));
+
+    //Obtem numero de arestas do grafo (segunda linha)
+    int M = atoi(fgets(buffer, 10, arq));
+
+    //Obtem no extremidade 1 da aresta A (terceira linha)
+    int A_1 = atoi(fgets(buffer, 10, arq));
+
+    //Obtem no extremidade 2 da aresta A (quarta linha)
+    int A_2 = atoi(fgets(buffer, 10, arq));
 
     //DEFINICAO DA INSTANCIA DE TESTES V0:
     //numero de nos incluindo S e T
-    int N = 5;
+    //int N = 5;
     int S = 0;
     int T = N-1;
 
@@ -103,22 +147,51 @@ void main(int argc, char* argv[]){
         adj_list[i] = lst_cria();
     }
 
-    adj_list[S] = lst_insere(adj_list[S],0,12,1,1);
-    adj_list[S] = lst_insere(adj_list[S],0,5,1,2);
-    adj_list[1] = lst_insere(adj_list[1],0,12,0,0);
-    adj_list[1] = lst_insere(adj_list[1],0,10,1,2);
-    adj_list[1] = lst_insere(adj_list[1],0,12,0,3);
-    adj_list[1] = lst_insere(adj_list[1],0,8,1,T);
-    adj_list[2] = lst_insere(adj_list[2],0,5,0,0);
-    adj_list[2] = lst_insere(adj_list[2],0,10,0,1);
-    adj_list[2] = lst_insere(adj_list[2],0,1,1,T);
-    adj_list[2] = lst_insere(adj_list[2],0,3,1,3);
-    adj_list[3] = lst_insere(adj_list[3],0,10,0,2);
-    adj_list[3] = lst_insere(adj_list[3],0,12,1,1);
-    adj_list[3] = lst_insere(adj_list[3],0,2,1,T);
-    adj_list[T] = lst_insere(adj_list[T],0,8,0,1);
-    adj_list[T] = lst_insere(adj_list[T],0,1,0,2);
-    adj_list[T] = lst_insere(adj_list[T],0,2,0,3);
+    //Ponteiro auxiliar para ler as strings do arquivo
+    char *pt;
+    //Vetor auxiliar de dados da linha
+    int data[5];
+    //Preenche as M arestas na lista de adjacencias
+    for(i = 0; i < M; i++){
+        aux = fgets(buffer,25,arq); //Le uma linha de aresta (a partir da quinta linha do arquivo)
+        pt = strtok(aux,","); //Divide a string em pedacos separados por ","
+        j = 0;
+        while(pt){
+            data[j] = atoi(pt);
+            pt = strtok(NULL,","); //Avanca o ponteiro na linha
+            j++;
+        }
+        if(data[0] == 0){
+            adj_list[data[0]] = lst_insere(adj_list[data[0]],data[1],data[2],1,data[4]); //Aresta no sentido positivo
+        }
+        else if(data[3] == 1){
+            adj_list[data[0]] = lst_insere(adj_list[data[0]],data[1],data[2],1,data[4]); //Aresta no sentido positivo
+            adj_list[data[4]] = lst_insere(adj_list[data[4]],data[1],data[2],0,data[0]); //Aresta no sentido reverso
+        }
+        else if(data[3] == 0){
+            adj_list[data[0]] = lst_insere(adj_list[data[0]],data[1],data[2],0,data[4]); //Aresta no sentido reverso
+            adj_list[data[4]] = lst_insere(adj_list[data[4]],data[1],data[2],1,data[0]); //Aresta no sentido positivo
+        }
+    }
+
+    free(pt);
+
+    // adj_list[S] = lst_insere(adj_list[S],0,12,1,1);
+    // adj_list[S] = lst_insere(adj_list[S],0,5,1,2);
+    // adj_list[1] = lst_insere(adj_list[1],0,12,0,0);
+    // adj_list[1] = lst_insere(adj_list[1],0,10,1,2);
+    // adj_list[1] = lst_insere(adj_list[1],0,12,0,3);
+    // adj_list[1] = lst_insere(adj_list[1],0,8,1,T);
+    // adj_list[2] = lst_insere(adj_list[2],0,5,0,0);
+    // adj_list[2] = lst_insere(adj_list[2],0,10,0,1);
+    // adj_list[2] = lst_insere(adj_list[2],0,1,1,T);
+    // adj_list[2] = lst_insere(adj_list[2],0,3,1,3);
+    // adj_list[3] = lst_insere(adj_list[3],0,10,0,2);
+    // adj_list[3] = lst_insere(adj_list[3],0,12,1,1);
+    // adj_list[3] = lst_insere(adj_list[3],0,2,1,T);
+    // adj_list[T] = lst_insere(adj_list[T],0,8,0,1);
+    // adj_list[T] = lst_insere(adj_list[T],0,1,0,2);
+    // adj_list[T] = lst_insere(adj_list[T],0,2,0,3);
     //FIM DA DEFINICAO DA INSTANCIA DE TESTES V0
 
     //lst_imprime(adj_list[T]);
@@ -152,7 +225,7 @@ void main(int argc, char* argv[]){
     Pilha* p;
 
     //Define fluxo total que se deseja alcancar
-    int R = TARGET;
+    //int R = TARGET;
     //Variavel que acumula o fluxo acumulado a cada iteracao
     int r = 0;
     //Variavel que armazena o fluxo maximo possivel no caminho atual
@@ -669,4 +742,6 @@ void main(int argc, char* argv[]){
     for(i = 0; i < N; i++){
         lst_libera(adj_list[i]);
     }
+
+    printf("\a");
 }

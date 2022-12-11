@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-//Funcao para gerar numero inteiro aleatorio de 1 ate max
-int randomize(int max)
+//Funcao para gerar numero inteiro aleatorio de min ate max
+int randomize(int min, int max)
 {
-    srand(time(NULL));
-    return (rand() % max) + 1;
+    //srand(time(0));
+    return (rand() % (max-min+1)) + min;
 }
 
 /* Arruma os N elementos de um vetor em ordem aleatoria.
