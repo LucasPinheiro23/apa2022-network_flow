@@ -79,7 +79,7 @@ int inst_gen(int N, char* filename){
 
     // int N; //Numero de nos da instancia
     int Mi; //Numero de arestas conectadas a determinado no i
-    int Mi_total = 1; //Contador de numero de arestas do grafo
+    int Mi_total = 0; //Contador de numero de arestas do grafo
     int A1, A2; //Extremidades da aresta A
     int i, j; //Indices dos loops
     int T = 0; //Verifica se o ultimo no (indice N-1) ja foi alcancado

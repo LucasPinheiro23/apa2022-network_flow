@@ -114,10 +114,12 @@ void main(int argc, char* argv[]){
     scanf("%s",nome);
 
     FILE* arq;
+    char dir[25] = "instances/";
     char buffer[10];
     char* aux;
 
-    arq = fopen(strcat(nome,".txt"),"r");
+    strcat(dir,nome);
+    arq = fopen(strcat(dir,".txt"),"r");
 
     //Testa se arquivo realmente existe na pasta local
     if(arq == NULL)
@@ -740,7 +742,7 @@ void main(int argc, char* argv[]){
     printf("Tempo de execucao total: %d:%d:%ld\n\n\n", horas, minutos, segundos);
 
     printf("\a");
-    
+
     lst_libera(L);
     pilha_libera(p);
     
